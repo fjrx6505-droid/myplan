@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Plan">
+<meta name="theme-color" content="#1a1208">
+<title>My Daily Plan</title>
+
+<!-- PWA Manifest inline -->
+<script>
+const manifestData = {
+  name: "My Daily Transformation Plan",
+  short_name: "My Plan",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#1a1208",
+  theme_color: "#1a1208",
+  orientation: "portrait",
+  icons: [{
+    src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='24' fill='%231a1208'/><text x='96' y='130' font-size='100' text-anchor='middle'>🌟</text></svg>`),
+    sizes: "192x192", type: "image/svg+xml"
+  }]
+};
+const blob = new Blob([JSON.stringify(manifestData)], {type:"application/json"});
+const manifestURL = URL.createObjectURL(blob);
+document.write('<link rel="manifest" href="' + manifestURL + '">');
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;500;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --dark: #1a1208;
+    --dark2: #231508;
+    --dark3: #1e1208;
+    --cream: #fdf6f0;
+    --orange: #e85c3a;
+    --peach: #e8855a;
+    --brown: #7a5c3c;
+    --brown-light: #c8956a;
+    --teal: #3a7a7a;
+    --teal-light: #7adad0;
+    --green: #5a9a5a;
+    --purple: #6a4a8a;
+    --muted: #a07868;
+    --border: rgba(255,255,255,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--dark); overflow: hidden; }
+  body { font-family: 'Outfit', sans-serif; color: var(--cream); }
+  ::-webkit-scrollbar { display: none; }
+
+  /* ─── LAYOUT ─── */
+  #app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; background: var(--dark); }
+
+  /* ─── HEADER ─── */
+  #header { background: linear-gradient(135deg, #2a1a08, #1a1208); padding: 16px 18px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .header-row { display: flex; justify-content: space-between; align-items: center; }
+  #clock { font-family: 'Fraunces', serif; font-size: 34px; font-weight: 300; letter-spacing: -1px; line-height: 1; }
+  #datestr { font-size: 11px; color: var(--brown-light); margin-top: 2px; letter-spacing: 0.04em; }
+  .ring-wrap { flex-shrink: 0; }
+  #hard-banner { margin-top: 10px; background: rgba(106,74,138,0.25); border: 1px solid rgba(106,74,138,0.5); border-radius: 8px; padding: 7px 10px; font-size: 12px; color: #c8a8f0; display: none; }
+
+  /* ─── TABS ─── */
+  #tabs { display: flex; background: #120e06; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .tab { flex: 1; background: none; border: none; border-bottom: 2px solid transparent; color: var(--brown); padding: 11px 4px; font-size: 12px; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s; }
+  .tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+
+  /* ─── CONTENT ─── */
+  #content { flex: 1; overflow-y: auto; padding: 14px 14px 80px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ─── CARDS ─── */
+  .card { background: var(--dark3); border-radius: 14px; padding: 16px; margin-bottom: 10px; }
+  .section-label { font-size: 10px; letter-spacing: 0.15em; color: var(--brown-light); text-transform: uppercase; margin-bottom: 8px; }
+
+  /* ─── NOW PANEL ─── */
+  .hero-card { background: var(--dark2); border-radius: 16px; padding: 18px; margin-bottom: 10px; position: relative; }
+  .hero-icon { font-size: 38px; margin-bottom: 4px; }
+  .hero-title { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; margin-bottom: 3px; }
+  .hero-time { font-size: 12px; color: var(--brown-light); margin-bottom: 8px; }
+  .hero-note { font-size: 13px; color: #c8a888; line-height: 1.65; margin-bottom: 12px; }
+  .water-chip { display: inline-block; background: rgba(58,122,122,0.2); border: 1px solid rgba(58,122,122,0.45); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: var(--teal-light); margin-bottom: 12px; }
+  .done-btn { background: rgba(232,92,58,0.15); border: 1px solid rgba(232,92,58,0.5); border-radius: 20px; padding: 8px 22px; color: var(--orange); font-size: 13px; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s; }
+  .done-btn.is-done { background: rgba(90,154,90,0.2); border-color: rgba(90,154,90,0.5); color: #7adc7a; }
+
+  .next-card { background: #1e1208; border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-bottom: 10px; }
+  .next-row { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+  .next-icon { font-size: 24px; }
+  .next-title { font-size: 15px; font-weight: 500; }
+  .next-time { font-size: 12px; color: var(--brown-light); }
+
+  .glance-row { display: flex; justify-content: space-around; }
+  .glance-stat { text-align: center; }
+  .glance-num { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 300; }
+  .glance-lbl { font-size: 10px; color: var(--brown); }
+
+  .alert-card { background: rgba(58,122,122,0.1); border: 1px solid rgba(58,122,122,0.3); border-radius: 12px; padding: 11px 13px; margin-bottom: 9px; display: flex; gap: 10px; align-items: flex-start; }
+  .alert-icon { font-size: 20px; flex-shrink: 0; }
+  .alert-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .alert-note { font-size: 11px; color: var(--teal-light); }
+  .alert-coffee { background: rgba(200,100,0,0.1); border-color: rgba(200,100,0,0.3); }
+  .alert-coffee .alert-note { color: #d4a060; }
+
+  /* ─── TODAY PANEL ─── */
+  .prog-bar-wrap { margin-bottom: 14px; }
+  .prog-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-bottom: 5px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, #e8855a, #e85c3a); border-radius: 2px; transition: width 0.5s ease; }
+  .prog-text { font-size: 11px; color: var(--brown); }
+
+  .task-item { background: var(--dark3); border-radius: 12px; padding: 11px 12px; margin-bottom: 7px; cursor: pointer; display: flex; align-items: flex-start; gap: 11px; transition: opacity 0.2s; }
+  .task-item.is-done { opacity: 0.55; }
+  .task-item.is-current { background: #231a08; }
+  .task-check { width: 20px; height: 20px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; margin-top: 2px; transition: all 0.2s; }
+  .task-check.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .task-right { flex: 1; min-width: 0; }
+  .task-top { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .task-icon-sm { font-size: 15px; }
+  .task-label { font-size: 14px; font-weight: 500; }
+  .task-item.is-done .task-label { text-decoration: line-through; }
+  .now-badge { background: var(--orange); border-radius: 4px; padding: 1px 5px; font-size: 9px; color: #fff; font-weight: 700; letter-spacing: 0.08em; }
+  .core-badge { background: rgba(90,154,90,0.2); border: 1px solid rgba(90,154,90,0.4); border-radius: 4px; padding: 1px 5px; font-size: 9px; color: #7adc7a; }
+  .task-time { font-size: 11px; color: var(--brown); margin-top: 2px; }
+  .task-note { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+  .task-water-lbl { font-size: 11px; color: var(--teal-light); margin-top: 2px; }
+
+  /* ─── WATER PANEL ─── */
+  .water-hero { text-align: center; margin-bottom: 10px; }
+  .water-title-lbl { font-size: 10px; letter-spacing: 0.15em; color: var(--brown-light); text-transform: uppercase; margin-bottom: 4px; }
+  .water-amount { font-family: 'Fraunces', serif; font-size: 52px; font-weight: 300; line-height: 1; }
+  .water-goal-lbl { font-size: 12px; color: var(--brown); margin-top: 3px; margin-bottom: 16px; }
+  .water-viz-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+  .water-viz-bg { width: 56px; height: 96px; background: rgba(255,255,255,0.05); border: 2px solid rgba(58,122,122,0.4); border-radius: 8px; position: relative; overflow: hidden; display: flex; align-items: flex-end; }
+  .water-viz-fill { width: 100%; background: linear-gradient(0deg, var(--teal), var(--teal-light)); border-radius: 0 0 6px 6px; transition: height 0.5s ease; }
+  .water-viz-pct { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+  .glass-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 14px; }
+  .glass { width: 40px; height: 40px; border: 1.5px solid rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; color: rgba(255,255,255,0.25); transition: all 0.2s; }
+  .glass.filled { background: rgba(58,122,122,0.2); border-color: rgba(58,122,122,0.6); color: var(--teal-light); }
+  .water-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 8px; }
+  .water-btn { background: rgba(58,122,122,0.15); border: 1px solid rgba(58,122,122,0.4); border-radius: 20px; padding: 7px 14px; color: var(--teal-light); font-size: 13px; font-family: 'Outfit', sans-serif; cursor: pointer; }
+  .water-btn-minus { background: none; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 6px 14px; color: var(--brown); font-size: 12px; font-family: 'Outfit', sans-serif; cursor: pointer; display: block; margin: 0 auto; }
+  .water-sched { margin-top: 10px; }
+  .ws-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .ws-time { font-size: 11px; color: var(--orange); font-weight: 600; min-width: 62px; }
+  .ws-ml { font-size: 11px; color: var(--teal-light); font-weight: 600; min-width: 36px; }
+  .ws-note { font-size: 11px; color: var(--brown); }
+
+  /* ─── SETTINGS PANEL ─── */
+  .hard-toggle-row { display: flex; align-items: center; gap: 14px; cursor: pointer; padding: 8px 0; }
+  .hd-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+  .hd-note { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .toggle-track { width: 44px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 12px; position: relative; flex-shrink: 0; transition: background 0.3s; }
+  .toggle-track.on { background: rgba(106,74,138,0.6); }
+  .toggle-thumb { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 10px; transition: left 0.3s; }
+  .toggle-track.on .toggle-thumb { left: 22px; }
+  .hd-min-list { margin-top: 10px; padding: 10px 12px; background: rgba(106,74,138,0.1); border-radius: 8px; border: 1px solid rgba(106,74,138,0.3); }
+  .hd-min-title { font-size: 11px; color: #c8a8f0; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; }
+  .hd-min-row { font-size: 13px; color: #e0d0ff; padding: 3px 0; }
+  .supp-row { padding: 9px 11px; margin-bottom: 7px; background: rgba(255,255,255,0.02); border-radius: 8px; }
+  .supp-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .supp-when { font-size: 12px; color: var(--brown-light); margin-bottom: 1px; }
+  .supp-rule { font-size: 11px; color: var(--brown); }
+  .med-row { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .med-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .med-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .med-note { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .reset-btn { background: none; border: 1px solid rgba(200,50,50,0.3); border-radius: 8px; padding: 8px 16px; color: rgba(200,100,100,0.7); font-size: 12px; font-family: 'Outfit', sans-serif; cursor: pointer; }
+  .install-card { background: rgba(58,122,122,0.1); border: 1px solid rgba(58,122,122,0.4); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .install-btn { background: var(--teal); border: none; border-radius: 10px; padding: 10px 20px; color: #fff; font-size: 14px; font-family: 'Outfit', sans-serif; cursor: pointer; width: 100%; margin-top: 10px; font-weight: 600; }
+
+  /* ─── CELEBRATION ─── */
+  #celebration { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: none; align-items: center; justify-content: center; z-index: 100; cursor: pointer; }
+  #celebration.show { display: flex; }
+  .celeb-inner { text-align: center; padding: 32px; }
+  .celeb-emoji { font-size: 72px; margin-bottom: 14px; }
+  .celeb-title { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 400; margin-bottom: 8px; }
+  .celeb-note { font-size: 14px; color: var(--brown-light); }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <div id="header">
+    <div class="header-row">
+      <div>
+        <div id="clock">--:--</div>
+        <div id="datestr">Loading...</div>
+      </div>
+      <div class="ring-wrap">
+        <svg id="ring-svg" width="52" height="52" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
+          <circle id="ring-arc" cx="26" cy="26" r="22" fill="none" stroke="#e85c3a" stroke-width="4"
+            stroke-dasharray="0 138.2" stroke-linecap="round" transform="rotate(-90 26 26)"
+            style="transition:stroke-dasharray 0.5s ease"/>
+          <text x="26" y="31" text-anchor="middle" fill="white" font-size="13" font-family="Outfit" font-weight="600" id="ring-pct">0%</text>
+        </svg>
+      </div>
+    </div>
+    <div id="hard-banner">💙 Hard day mode — minimums only. You're doing enough.</div>
+  </div>
+
+  <!-- TABS -->
+  <div id="tabs">
+    <button class="tab active" onclick="switchTab('now')">⚡ Now</button>
+    <button class="tab" onclick="switchTab('today')">📋 Today</button>
+    <button class="tab" onclick="switchTab('water')">💧 Water</button>
+    <button class="tab" onclick="switchTab('settings')">⚙️</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- NOW PANEL -->
+    <div class="panel active" id="panel-now">
+      <div class="hero-card" id="hero-card">
+        <div class="section-label">RIGHT NOW</div>
+        <div class="hero-icon" id="hero-icon">🌅</div>
+        <div class="hero-title" id="hero-title">Loading...</div>
+        <div class="hero-time" id="hero-time"></div>
+        <div class="hero-note" id="hero-note"></div>
+        <div class="water-chip" id="hero-water" style="display:none"></div>
+        <button class="done-btn" id="hero-done-btn" onclick="toggleCurrent()">Mark done</button>
+      </div>
+
+      <div class="next-card">
+        <div class="section-label">NEXT</div>
+        <div class="next-row">
+          <div class="next-icon" id="next-icon">—</div>
+          <div>
+            <div class="next-title" id="next-title">—</div>
+            <div class="next-time" id="next-time">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Today at a glance</div>
+        <div class="glance-row">
+          <div class="glance-stat"><div class="glance-num" id="g-done">0</div><div class="glance-lbl">done</div></div>
+          <div class="glance-stat"><div class="glance-num" id="g-left">0</div><div class="glance-lbl">remaining</div></div>
+          <div class="glance-stat"><div class="glance-num" id="g-water">0L</div><div class="glance-lbl">water</div></div>
+          <div class="glance-stat"><div class="glance-num" id="g-hydro">0%</div><div class="glance-lbl">hydration</div></div>
+        </div>
+      </div>
+
+      <div class="alert-card" id="supp-alert" style="display:none">
+        <div class="alert-icon">💊</div>
+        <div>
+          <div class="alert-title">Supplements not taken yet</div>
+          <div class="alert-note">Iron + Vit C with water only. No coffee/dairy for 40 min after.</div>
+        </div>
+      </div>
+
+      <div class="alert-card alert-coffee" id="coffee-alert" style="display:none">
+        <div class="alert-icon">☕</div>
+        <div>
+          <div class="alert-title">No more coffee after 2 PM</div>
+          <div class="alert-note">6-hour caffeine half-life will disrupt your sleep tonight.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TODAY PANEL -->
+    <div class="panel" id="panel-today">
+      <div class="prog-bar-wrap">
+        <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+        <div class="prog-text" id="prog-text">0 of 0 complete</div>
+      </div>
+      <div id="task-list"></div>
+    </div>
+
+    <!-- WATER PANEL -->
+    <div class="panel" id="panel-water">
+      <div class="card water-hero">
+        <div class="water-title-lbl">Daily Hydration</div>
+        <div class="water-amount" id="w-amount">0.0L</div>
+        <div class="water-goal-lbl">Goal: 2.4L</div>
+        <div class="water-viz-wrap">
+          <div class="water-viz-bg">
+            <div class="water-viz-fill" id="w-fill" style="height:0%"></div>
+            <div class="water-viz-pct" id="w-pct">0%</div>
+          </div>
+        </div>
+        <div class="glass-grid" id="glass-grid"></div>
+        <div class="water-btns">
+          <button class="water-btn" onclick="addWater(150)">+150ml</button>
+          <button class="water-btn" onclick="addWater(250)">+250ml</button>
+          <button class="water-btn" onclick="addWater(300)">+300ml</button>
+          <button class="water-btn" onclick="addWater(500)">+500ml</button>
+        </div>
+        <button class="water-btn-minus" onclick="addWater(-150)">− undo 150ml</button>
+      </div>
+      <div class="card water-sched">
+        <div class="section-label">When to drink</div>
+        <div class="ws-row"><div class="ws-time">6:00 AM</div><div class="ws-ml">500ml</div><div class="ws-note">Wake up — first thing</div></div>
+        <div class="ws-row"><div class="ws-time">8:12 AM</div><div class="ws-ml">300ml</div><div class="ws-note">Commute to work</div></div>
+        <div class="ws-row"><div class="ws-time">9:30 AM</div><div class="ws-ml">250ml</div><div class="ws-note">Morning break</div></div>
+        <div class="ws-row"><div class="ws-time">1:00 PM</div><div class="ws-ml">300ml</div><div class="ws-note">With lunch</div></div>
+        <div class="ws-row"><div class="ws-time">3:30 PM</div><div class="ws-ml">250ml</div><div class="ws-note">Afternoon snack</div></div>
+        <div class="ws-row"><div class="ws-time">6:00 PM</div><div class="ws-ml">250ml</div><div class="ws-note">Evening commute</div></div>
+        <div class="ws-row"><div class="ws-time">8:00 PM</div><div class="ws-ml">200ml</div><div class="ws-note">Arrive home</div></div>
+        <div class="ws-row"><div class="ws-time">Evening</div><div class="ws-ml">350ml</div><div class="ws-note">Tea + evening drinks</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div class="panel" id="panel-settings">
+
+      <div class="install-card" id="install-card">
+        <div class="section-label" style="color:var(--teal-light)">📲 Add to home screen</div>
+        <div style="font-size:13px;color:#c8a888;line-height:1.6;margin-bottom:4px">Tap the button below, then tap <b style="color:var(--cream)">"Add to Home Screen"</b> in the menu that appears.</div>
+        <button class="install-btn" id="install-btn" onclick="triggerInstall()">Install as App</button>
+        <div style="font-size:11px;color:var(--brown);margin-top:8px">Or: Chrome menu (⋮) → Add to Home screen</div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Today's mode</div>
+        <div class="hard-toggle-row" onclick="toggleHardDay()">
+          <div style="flex:1">
+            <div class="hd-title">💙 Hard Day Mode</div>
+            <div class="hd-note" id="hd-note">Off — full schedule. Tap to switch to minimums only.</div>
+          </div>
+          <div class="toggle-track" id="toggle-track">
+            <div class="toggle-thumb"></div>
+          </div>
+        </div>
+        <div class="hd-min-list" id="hd-min-list" style="display:none">
+          <div class="hd-min-title">Your minimums today:</div>
+          <div id="hd-min-items"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Supplement rules</div>
+        <div class="supp-row" style="border-left:3px solid var(--teal)">
+          <div class="supp-name" style="color:var(--teal-light)">Iron + Vitamin C</div>
+          <div class="supp-when">6:05 AM (weekday) / 10:15 AM (weekend)</div>
+          <div class="supp-rule">With water ONLY. No coffee, tea, or dairy for 40 min.</div>
+        </div>
+        <div class="supp-row" style="border-left:3px solid var(--green)">
+          <div class="supp-name" style="color:#7adc7a">Vitamin D</div>
+          <div class="supp-when">With lunch (1:00 PM)</div>
+          <div class="supp-rule">Needs dietary fat — always take with a meal.</div>
+        </div>
+        <div class="supp-row" style="border-left:3px solid var(--brown)">
+          <div class="supp-name" style="color:var(--brown-light)">Coffee</div>
+          <div class="supp-when">After 6:45 AM — STOP after 2:00 PM</div>
+          <div class="supp-rule">Max 2 cups/day. 6-hour half-life disrupts sleep.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Medical reminders</div>
+        <div class="med-row">
+          <div class="med-icon">💨</div>
+          <div><div class="med-name">Asthma</div><div class="med-note">5-min warm-up walk FIRST before every treadmill session. Inhaler within reach always.</div></div>
+        </div>
+        <div class="med-row">
+          <div class="med-icon">🩸</div>
+          <div><div class="med-name">Anemia</div><div class="med-note">Iron absorbs best with Vit C, away from coffee and dairy. Never push through dizziness — stop and rest.</div></div>
+        </div>
+        <div class="med-row" style="border-bottom:none">
+          <div class="med-icon">🧠</div>
+          <div><div class="med-name">Depression</div><div class="med-note">15-min walk counts on hard days. The plan restarts — it never resets. You're always doing enough.</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Reset today</div>
+        <button class="reset-btn" onclick="resetToday()">Clear today's progress</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- CELEBRATION -->
+<div id="celebration" onclick="document.getElementById('celebration').classList.remove('show')">
+  <div class="celeb-inner">
+    <div class="celeb-emoji">🎉</div>
+    <div class="celeb-title">All done today!</div>
+    <div class="celeb-note">Every single task. Tap to close.</div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const WEEKDAY = [
+  { id:"wake",       time:360,  end:365,  label:"Wake up",               icon:"🌅", note:"Drink 500ml water immediately. No phone for 10 min.",    water:500, cat:"morning", min:true  },
+  { id:"iron",       time:365,  end:370,  label:"Iron + Vitamin C",       icon:"💊", note:"With water ONLY. No coffee, tea or dairy for 40 min.",   water:0,   cat:"supps",   min:true  },
+  { id:"treadmill",  time:370,  end:405,  label:"Treadmill ★",            icon:"🏃", note:"5 min warm-up walk FIRST (asthma protocol). Inhaler nearby.", water:0, cat:"exercise",min:true  },
+  { id:"coffee",     time:405,  end:415,  label:"Coffee",                 icon:"☕", note:"Iron window complete. Black or with plant milk.",         water:0,   cat:"morning", min:false },
+  { id:"ready",      time:410,  end:490,  label:"Shower, dress & makeup", icon:"🚿", note:"Your full 1h20. Smoothie ready to grab at 8:10.",         water:0,   cat:"morning", min:false },
+  { id:"smoothie",   time:490,  end:492,  label:"Protein smoothie ★",     icon:"🥤", note:"340 kcal · 30g protein. Drink before or during commute.", water:0,   cat:"food",    min:true  },
+  { id:"leave",      time:492,  end:570,  label:"Leave home",             icon:"🚃", note:"~3,000 commute steps. Drink 300ml water en route.",       water:300, cat:"commute", min:false },
+  { id:"break",      time:570,  end:780,  label:"Morning break + water",  icon:"💧", note:"Stand, stretch, 5 deep breaths. 250ml water.",           water:250, cat:"work",    min:false },
+  { id:"lunch",      time:780,  end:930,  label:"Lunch + Vitamin D ★",    icon:"🍽️", note:"Batch-cooked meal. Take Vit D supplement here. 300ml water.", water:300, cat:"food", min:true  },
+  { id:"snack",      time:930,  end:1080, label:"Snack + water",          icon:"🍎", note:"Apple + nut butter or yogurt + berries. 250ml water.",   water:250, cat:"food",    min:false },
+  { id:"leaveoff",   time:1080, end:1200, label:"Leave office",           icon:"🚃", note:"Commute home. 250ml water on the journey.",              water:250, cat:"commute", min:false },
+  { id:"home",       time:1200, end:1215, label:"Arrive home",            icon:"🏠", note:"Change clothes first. 200ml water before the fridge.",   water:200, cat:"evening", min:false },
+  { id:"dinner",     time:1215, end:1260, label:"Dinner ★",               icon:"🍽️", note:"Batch-cooked — heat and eat. Protein + veg.",            water:0,   cat:"food",    min:true  },
+  { id:"movement",   time:1260, end:1320, label:"Evening movement ★",     icon:"🧘", note:"Tue/Thu: yoga 20 min. Mon/Wed: light walk. Fri: stretch.", water:0, cat:"exercise",min:true  },
+  { id:"metime",     time:1320, end:1380, label:"ME TIME ★",              icon:"🌟", note:"1 full hour. Bath, reading, show, music. No work. No guilt.", water:0, cat:"metime", min:true  },
+  { id:"phoneaway",  time:1380, end:1385, label:"Phone away",             icon:"📵", note:"Grayscale + Do Not Disturb. In another room.",           water:0,   cat:"sleep",   min:true  },
+  { id:"tea",        time:1385, end:1395, label:"Herbal tea",             icon:"🍵", note:"Chamomile or valerian. Wind down quietly.",              water:150, cat:"sleep",   min:false },
+  { id:"sleep",      time:1395, end:360,  label:"Sleep ★",                icon:"😴", note:"7–7.5 hours. Everything in this plan leads here.",       water:0,   cat:"sleep",   min:true  },
+];
+const WEEKEND = [
+  { id:"wake",       time:600,  end:615,  label:"Wake up",               icon:"🌅", note:"500ml water. Rise gently — no alarm needed.",           water:500, cat:"morning", min:true  },
+  { id:"iron",       time:615,  end:630,  label:"Iron + Vitamin C",      icon:"💊", note:"With water ONLY. No coffee/dairy for 40 min.",          water:0,   cat:"supps",   min:true  },
+  { id:"brunch",     time:630,  end:690,  label:"Late brunch ★",         icon:"🍳", note:"Eggs + veg + fruit + coffee. Take Vit D here.",         water:300, cat:"food",    min:true  },
+  { id:"exercise",   time:690,  end:750,  label:"Exercise ★",            icon:"🏃", note:"Sat: treadmill 40-50 min. Sun: strength 20 min + yoga.", water:0,  cat:"exercise",min:true  },
+  { id:"mealprep",   time:780,  end:840,  label:"Meal prep (Sunday)",    icon:"🥘", note:"Batch cook chicken + veg + potato. Prep 5 smoothie bags.", water:0, cat:"prep",   min:false },
+  { id:"freetime",   time:840,  end:1110, label:"Free time",             icon:"🎉", note:"Friends, errands, rest. Exercise is done.",             water:400, cat:"leisure", min:false },
+  { id:"dinner",     time:1110, end:1320, label:"Dinner ★",              icon:"🍽️", note:"Full meal. Eating out today? Use the strategy.",        water:200, cat:"food",    min:true  },
+  { id:"metime",     time:1320, end:1380, label:"ME TIME ★",             icon:"🌟", note:"1 full hour. Bath, reading, show, music. No work.",     water:0,   cat:"metime",  min:true  },
+  { id:"phoneaway",  time:1380, end:1385, label:"Phone away",            icon:"📵", note:"Same as weekdays. Non-negotiable.",                     water:0,   cat:"sleep",   min:true  },
+  { id:"sleep",      time:1395, end:600,  label:"Sleep ★",               icon:"😴", note:"7–7.5 hours.",                                          water:0,   cat:"sleep",   min:true  },
+];
+
+const CAT_COLOR = {
+  morning:"#e8855a", supps:"#3a7a7a", exercise:"#e85c3a",
+  food:"#5a8a5a", work:"#7a7a3a", commute:"#7a5c3c",
+  evening:"#8a5a6a", metime:"#6a4a8a", sleep:"#3a5a8a",
+  prep:"#5a7a8a", leisure:"#7a6a4a"
+};
+const HARD_IDS = ["iron","treadmill","smoothie","lunch","brunch","dinner","metime","phoneaway","sleep","exercise"];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let state = { completed: [], waterMl: 0, hardDay: false };
+let deferredPrompt = null;
+
+function todayKey() {
+  const d = new Date();
+  return `dc_${d.getFullYear()}_${d.getMonth()+1}_${d.getDate()}`;
+}
+function isWeekend() { const d = new Date().getDay(); return d===0||d===6; }
+function nowMins() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+function getTasks() {
+  const all = isWeekend() ? WEEKEND : WEEKDAY;
+  return state.hardDay ? all.filter(t => HARD_IDS.includes(t.id)) : all;
+}
+function getCurrentTask() {
+  const tasks = isWeekend() ? WEEKEND : WEEKDAY;
+  const now = nowMins();
+  for (const t of tasks) {
+    if (t.end < t.time) { if (now >= t.time || now < t.end) return t; }
+    else { if (now >= t.time && now < t.end) return t; }
+  }
+  return tasks[0];
+}
+function getNextTask(currentId) {
+  const tasks = isWeekend() ? WEEKEND : WEEKDAY;
+  const idx = tasks.findIndex(t => t.id === currentId);
+  return tasks[(idx+1) % tasks.length];
+}
+function fmtTime(mins) {
+  const h = Math.floor(mins/60) % 24;
+  const m = mins % 60;
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hh = h > 12 ? h-12 : h===0 ? 12 : h;
+  return `${hh}:${m.toString().padStart(2,"0")} ${ampm}`;
+}
+
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+function saveState() {
+  try { localStorage.setItem(todayKey(), JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(todayKey());
+    if (raw) state = {...state, ...JSON.parse(raw)};
+  } catch(e) {}
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderHeader();
+  renderNow();
+  renderToday();
+  renderWater();
+  renderSettings();
+}
+
+function renderHeader() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+  const dateStr = now.toLocaleDateString([], {weekday:"long", month:"long", day:"numeric"})
+    + (isWeekend() ? " · Weekend" : " · Weekday");
+  document.getElementById("clock").textContent = timeStr;
+  document.getElementById("datestr").textContent = dateStr;
+
+  const tasks = getTasks();
+  const done = tasks.filter(t => state.completed.includes(t.id)).length;
+  const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+  document.getElementById("ring-arc").setAttribute("stroke-dasharray", `${pct*1.382} 138.2`);
+  document.getElementById("ring-pct").textContent = pct + "%";
+  document.getElementById("hard-banner").style.display = state.hardDay ? "block" : "none";
+}
+
+function renderNow() {
+  const cur = getCurrentTask();
+  const nxt = getNextTask(cur.id);
+  const col = CAT_COLOR[cur.cat] || "#e85c3a";
+  document.getElementById("hero-card").style.borderLeft = `4px solid ${col}`;
+  document.getElementById("hero-icon").textContent = cur.icon;
+  document.getElementById("hero-title").textContent = cur.label;
+  document.getElementById("hero-time").textContent = fmtTime(cur.time) + " → " + fmtTime(cur.end);
+  document.getElementById("hero-note").textContent = cur.note;
+
+  const wchip = document.getElementById("hero-water");
+  if (cur.water > 0) { wchip.textContent = `💧 +${cur.water}ml water with this`; wchip.style.display = "inline-block"; }
+  else { wchip.style.display = "none"; }
+
+  const btn = document.getElementById("hero-done-btn");
+  const isDone = state.completed.includes(cur.id);
+  btn.textContent = isDone ? "✓ Done" : "Mark done";
+  btn.className = isDone ? "done-btn is-done" : "done-btn";
+  btn.onclick = () => toggleCurrent();
+
+  document.getElementById("next-icon").textContent = nxt.icon;
+  document.getElementById("next-title").textContent = nxt.label;
+  document.getElementById("next-time").textContent = fmtTime(nxt.time);
+
+  const tasks = getTasks();
+  const doneCount = tasks.filter(t => state.completed.includes(t.id)).length;
+  const waterL = (state.waterMl/1000).toFixed(1);
+  const waterPct = Math.min(state.waterMl/2400, 1);
+  document.getElementById("g-done").textContent = doneCount;
+  document.getElementById("g-left").textContent = tasks.length - doneCount;
+  document.getElementById("g-water").textContent = waterL + "L";
+  document.getElementById("g-hydro").textContent = waterPct >= 1 ? "✓" : Math.round(waterPct*100) + "%";
+
+  const nm = nowMins();
+  document.getElementById("supp-alert").style.display =
+    (nm < 720 && !state.completed.includes("iron")) ? "flex" : "none";
+  document.getElementById("coffee-alert").style.display = nm >= 840 ? "flex" : "none";
+}
+
+function renderToday() {
+  const tasks = getTasks();
+  const done = tasks.filter(t => state.completed.includes(t.id)).length;
+  const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+  document.getElementById("prog-fill").style.width = pct + "%";
+  document.getElementById("prog-text").textContent = `${done} of ${tasks.length} complete`;
+
+  const cur = getCurrentTask();
+  const list = document.getElementById("task-list");
+  list.innerHTML = "";
+  tasks.forEach(task => {
+    const isDone = state.completed.includes(task.id);
+    const isCur = task.id === cur.id;
+    const col = isDone ? "#5a9a5a" : isCur ? "#e85c3a" : CAT_COLOR[task.cat] || "#555";
+    const div = document.createElement("div");
+    div.className = `task-item${isDone?" is-done":""}${isCur?" is-current":""}`;
+    div.style.borderLeft = `3px solid ${col}`;
+    div.onclick = () => { toggleTask(task.id); };
+
+    const badges = `${isCur ? '<span class="now-badge">NOW</span>' : ""}
+      ${task.min && !state.hardDay ? '<span class="core-badge">core</span>' : ""}`;
+    div.innerHTML = `
+      <div class="task-check${isDone?" done":"}">${isDone?"✓":""}</div>
+      <div class="task-right">
+        <div class="task-top">
+          <span class="task-icon-sm">${task.icon}</span>
+          <span class="task-label">${task.label}</span>
+          ${badges}
+        </div>
+        <div class="task-time">${fmtTime(task.time)}</div>
+        ${!isDone ? `<div class="task-note">${task.note}</div>` : ""}
+        ${task.water > 0 && !isDone ? `<div class="task-water-lbl">💧 +${task.water}ml</div>` : ""}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function renderWater() {
+  const pct = Math.min(state.waterMl / 2400, 1);
+  document.getElementById("w-amount").textContent = (state.waterMl/1000).toFixed(1) + "L";
+  document.getElementById("w-fill").style.height = Math.round(pct*100) + "%";
+  document.getElementById("w-pct").textContent = Math.round(pct*100) + "%";
+
+  const grid = document.getElementById("glass-grid");
+  grid.innerHTML = "";
+  for (let i = 0; i < 8; i++) {
+    const filled = state.waterMl >= (i+1)*300;
+    const g = document.createElement("div");
+    g.className = `glass${filled?" filled":""}`;
+    g.textContent = filled ? "💧" : "○";
+    g.onclick = () => { addWater(filled ? -300 : 300); };
+    grid.appendChild(g);
+  }
+}
+
+function renderSettings() {
+  const tr = document.getElementById("toggle-track");
+  const hdNote = document.getElementById("hd-note");
+  const minList = document.getElementById("hd-min-list");
+  if (state.hardDay) {
+    tr.classList.add("on");
+    hdNote.textContent = "Active — only core essentials shown. You are doing enough.";
+    minList.style.display = "block";
+    const tasks = isWeekend() ? WEEKEND : WEEKDAY;
+    document.getElementById("hd-min-items").innerHTML =
+      tasks.filter(t=>HARD_IDS.includes(t.id)).map(t=>`<div class="hd-min-row">${t.icon} ${t.label}</div>`).join("");
+  } else {
+    tr.classList.remove("on");
+    hdNote.textContent = "Off — full schedule visible. Tap to switch to minimums only.";
+    minList.style.display = "none";
+  }
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────────────
+function toggleTask(id) {
+  const tasks = getTasks();
+  if (state.completed.includes(id)) {
+    state.completed = state.completed.filter(x => x !== id);
+  } else {
+    state.completed = [...state.completed, id];
+    const doneNow = tasks.filter(t => state.completed.includes(t.id)).length;
+    if (doneNow === tasks.length) {
+      setTimeout(() => document.getElementById("celebration").classList.add("show"), 300);
+    }
+  }
+  saveState();
+  renderAll();
+}
+function toggleCurrent() { toggleTask(getCurrentTask().id); }
+function addWater(ml) {
+  state.waterMl = Math.max(0, Math.min(state.waterMl + ml, 3000));
+  saveState();
+  renderWater();
+  renderNow();
+}
+function toggleHardDay() {
+  state.hardDay = !state.hardDay;
+  saveState();
+  renderAll();
+}
+function resetToday() {
+  if (confirm("Clear all progress for today?")) {
+    state = { completed:[], waterMl:0, hardDay:false };
+    saveState();
+    renderAll();
+  }
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll(".tab").forEach((el,i) => {
+    const tabs = ["now","today","water","settings"];
+    el.classList.toggle("active", tabs[i] === tab);
+  });
+  document.querySelectorAll(".panel").forEach(el => el.classList.remove("active"));
+  document.getElementById("panel-"+tab).classList.add("active");
+}
+
+// ─── PWA INSTALL ──────────────────────────────────────────────────────────────
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById("install-btn").textContent = "📲 Install as App";
+});
+function triggerInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  } else {
+    alert("To install:\n1. Tap Chrome menu (⋮ three dots)\n2. Tap 'Add to Home screen'\n3. Tap 'Install'");
+  }
+}
+window.addEventListener("appinstalled", () => {
+  document.getElementById("install-card").innerHTML =
+    '<div style="font-size:13px;color:#7adc7a">✓ App installed on your home screen!</div>';
+});
+
+// ─── SERVICE WORKER (offline support) ────────────────────────────────────────
+if ("serviceWorker" in navigator) {
+  const swCode = `
+    const CACHE = 'daily-plan-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './daily-companion.html'])));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+    });
+  `;
+  const swBlob = new Blob([swCode], {type:"application/javascript"});
+  const swURL = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL).catch(()=>{});
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadState();
+renderAll();
+setInterval(() => { renderHeader(); renderNow(); }, 30000);
+</script>
+</body>
+</html>
